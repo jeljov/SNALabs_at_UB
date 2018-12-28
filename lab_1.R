@@ -33,6 +33,7 @@
 # The official manual is available at: 
 # http://cran.r-project.org/web/packages/igraph/igraph.pdf
 # also at: http://igraph.org/r/
+#
 # There is also an excellent tutorial for R and igraph beginners
 # available at: http://kateto.net/networks-r-igraph
 # It starts with introduction (reminder) of basic R constructs 
@@ -126,11 +127,20 @@ View(reports_to_data_frame)
 # object. In this case, we do have a header row, so we set
 # header=T, which tells R that the first row of data contains
 # column names.
-# We can load csv file from a URLČ
+# We can load csv file from a URL:
 # attributes <- read.csv('http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-Attributes.csv', header=T)
 # Or we can read from a local file:
 attributes <- read.csv('data/Krack-High-Tec-Attributes.csv', header=T)
-attributes
+str(attributes)
+summary(attributes)
+
+# The attributes set includes: 
+# - the actors' age (in years), 
+# - tenure or length of service (in years), 
+# - level in the corporate hierarchy; this is coded as follows: 
+#   1=CEO, 2 = Vice President, 3 = manager), 
+# - department, which is coded 1,2,3,4 with the CEO in department 0 ie not in a department
+
  
 # Other commands may be used to load data from files in different 
 # formats. read.delim() is a general function for loading any
@@ -173,7 +183,7 @@ colnames(reports_to_data_frame) <- c('ego', 'alter', 'reports_to_tie')
 head(reports_to_data_frame)
  
 # Before we merge these three data frames, we need to make sure 'ego' 
-# and 'alter' are the same across data sets. 
+# and 'alter' are the same across the data sets. 
 # The command below should return TRUE for every row if all ego rows
 # are the same for advice and friendship data frames:
 advice_data_frame$ego == friendship_data_frame$ego
@@ -236,7 +246,7 @@ E(krack_full)$advice_tie
 # whose name is given in the brackets
 
 # We can examine the proporition of advice connections
-#  in the overall set of ties:
+# in the overall set of ties:
 prop.table(table(E(krack_full)$advice_tie))
 
 # Access the friendship ties
@@ -374,7 +384,13 @@ krack_reports_to <- delete_edges(krack_full,
                                  E(krack_full)[E(krack_full)$reports_to_tie == 0])
 summary(krack_reports_to)
 
+# Note: an alternative way of creating a subgraph is by using the 
+# subgraph.edges() function and specifying which edges are to be preserved.
+# For example, to create the friendship network:
+krack_friendship_2 <- subgraph.edges(krack_full, 
+                                     eids = E(krack_full)[E(krack_full)$friendship_tie > 0])
  
+
 ###
 # 5. VISUALIZING NETWORKS
 ###
@@ -396,6 +412,11 @@ plot(krack_full,
 dev.off()
 # Check the documentation of the jpeg() function to see
 # how you can customise the image dimension, quality, ..
+
+# For a full list of igraph plotting parameters see Section 4.1
+# of the Network visualization in R tutorial:
+# http://kateto.net/network-visualization
+
  
 # This is a bit of a jumble, so let's look at the networks for
 # single edge types
