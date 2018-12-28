@@ -11,7 +11,7 @@
 # - cover some basic R commands
 # - introduce the *igraph* R package          
 # - load and manage network data
-# - generate network  visualizations
+# - generate network visualizations
 # - export the network (graph) data for use in  
 #   subsequent analysis
 ####################################################
@@ -29,7 +29,7 @@
  
 
 # For this and all subsequent labs, we will use the *igraph* 
-# R package, one of the most popular packages for SNA.
+# R package, one of the most popular R packages for SNA.
 # The official manual is available at: 
 # http://cran.r-project.org/web/packages/igraph/igraph.pdf
 # also at: http://igraph.org/r/
@@ -80,7 +80,7 @@ library(igraph)
 # All three networks are directed.
 
 # These edge lists are stored in tabular format in .txt files.
-# To read data fro those files, we will use the read.table() function.
+# To read data from those files, we will use the read.table() function.
 # read.table() is a common R function for loading data from
 # files in which values are in tabular format. The function loads
 # the table into a data frame object, which is the basic data type
@@ -265,18 +265,17 @@ prop.table(table(E(krack_full)$reports_to_tie))
 
  
 # If you would like to symmetrize the network, making all asymmetric
-# (directed) ties symmetric (undirected), use the as.undirected() function.
-# For example, if we assume that the friendship relation is symmetric, we
-# can transfrom the friendship network into undirected one as follows
+# (directed) ties symmetric (undirected), use the as.undirected() function
 # (check the documentation for the 'mode' parameter): 
-krack_friend_undirect <- as.undirected(krack_friendship, mode='collapse')
-summary(krack_friend_undirect)
+krack_full_undirect <- as.undirected(krack_full, mode='collapse')
+summary(krack_full_undirect)
+
 # Note that the resulting, undirected, network has no edge attributes.
 # If we want to collapse the directed network and keep edge weights,
 # we should set the "edge.attr.comb". For example, to sum the values
 # of the friendship_tie attribute and ignore the other two tie attributes
 # we set "edge.attr.comb" as follows:
-krack_friend_undir_weighted <- as.undirected(krack_friendship, mode='collapse', 
+krack_friend_undir_weighted <- as.undirected(krack_full, mode='collapse', 
                                              edge.attr.comb = list(friendship_tie='sum', 'ignore'))
 
 # Note: the list given as the value of the 'edge.attr.comb' parameter specifies that 
@@ -353,7 +352,7 @@ V(krack_full)$tenure[V(krack_full)$age > 40]
 
 # Or, we can the age of employees in the largest department:
 table(V(krack_full)$dept)
-V(krack_full)$age[V(krack_full)[V(krack_full)$dept == 2]]
+V(krack_full)$age[V(krack_full)$dept == 2]
 
 
 
