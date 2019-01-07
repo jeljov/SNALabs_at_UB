@@ -471,20 +471,24 @@ jpeg("output/1.6_Krackhardt_Reports_Color.jpg")
 plot(krack_reports_to, 
     layout=reports_to_layout, 
     vertex.color=dept_vertex_colors, # setting node color
-    vertex.label=NA,     # removing vertex labels
+    vertex.label=V(krack_full)$level,   # using role (level) as the vertex label
     edge.arrow.size=.3,
     main="Reports-to network\n(node color denotes department)")
 dev.off() 
 
 # Now let's set the vertex size by tenure:
 tenure_vertex_sizes = V(krack_full)$tenure
-tenure_vertex_sizes
+summary(tenure_vertex_sizes)
+# There is a large difference between the min and max values, which will not  
+# 'translate' well into visual depiction of the graph. So, we will somewhat
+# 'smooth' the difference
+tenure_vertex_sizes <- log(tenure_vertex_sizes)^2 + 7
 
 jpeg("output/1.7_Krackhardt_Reports_Vertex_Size.jpg") 
 plot(krack_reports_to, 
      layout=reports_to_layout, 
      vertex.color=dept_vertex_colors, 
-     vertex.label=NA, 
+     vertex.label=V(krack_full)$level,
      edge.arrow.size=.3,
      vertex.size=tenure_vertex_sizes, # setting the vertex size
      main="Reports-to network\n(node color denotes department, size denotes tenure)")
@@ -512,7 +516,6 @@ summary(krack_full_viz)
 E(krack_full_viz)$color[ E(krack_full_viz)$friendship_tie==1 ] <- '#377eb8' # blue
 E(krack_full_viz)$color[ E(krack_full_viz)$reports_to_tie==1 ] <- '#984ea3' # purple
 E(krack_full_viz)$arrow.size=.3 
-V(krack_full_viz)$label = NA
 V(krack_full_viz)$size = tenure_vertex_sizes
 V(krack_full_viz)$color = '#fed98e' # yellow as the node color
 V(krack_full_viz)$frame = '#000000' # black as the color of the nodes' edge/frame
@@ -541,7 +544,6 @@ jpeg("output/1.9_Krackhardt_Overlayed_Structure.jpg")
 plot(krack_friendship, 
      layout=reports_to_layout, 
      vertex.color=dept_vertex_colors, 
-     vertex.label=NA, 
      edge.arrow.size=.3,
      vertex.size=tenure_vertex_sizes, 
      main="Friendship network\noverlayed on the reports-to network structure")
@@ -551,7 +553,6 @@ dev.off()
 plot(krack_advice, 
      layout=reports_to_layout, 
      vertex.color=dept_vertex_colors, 
-     vertex.label=NA, 
      edge.arrow.size=.3,
      vertex.size=tenure_vertex_sizes, 
      main="Advice network\noverlayed on the reports-to network structure")
@@ -568,8 +569,8 @@ plot(krack_advice,
 write.graph(krack_full, file='output/lab1/krack_full.graphml', format="graphml")
  
 # For a more general file type (e.g., importable to Excel),
-# use the "edgelist" format. Note that this file format will
-# write the attributes; only the ties will be stored.
+# use the "edgelist" format. Note that this file format will keep
+# neither node nor tie attributes; only the edges will be stored.
 write.graph(krack_full, file='output/lab1/krack_full.txt', format="edgelist")
 
 # We can also save graphs as RData files. This is the best option if we intend
