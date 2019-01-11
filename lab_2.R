@@ -22,7 +22,9 @@
 
 # Load the required libraries
 library(igraph)
+# install.packages('ggplot2')
 library(ggplot2)
+# install.packages('tidyr')
 library(tidyr)
 # Note: tidyr is a new package; we will need it for some tasks 
 # associated with manipulating data frames
