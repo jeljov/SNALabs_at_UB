@@ -20,7 +20,7 @@
 # 1. SET UP THE SESSION
 ###
 
-# Load the required libraries
+# Install and load the required libraries
 library(igraph)
 # install.packages('ggplot2')
 library(ggplot2)
@@ -168,10 +168,9 @@ summary(krack_friendship_undirect)
 table(E(krack_friendship_undirect)$friendship_tie)
 
 # Before computing closeness, let's check if the network is connected.
-# In an undirected network, this reduces to checking for the presence of isolates 
-# (i.e. nodes that have no connections)
-which(degree(krack_friendship_undirect)==0)
-# no isolates, so the network is connected, and we can proceed
+# A network is connected if there is a path between any pair of nodes
+# in the network.
+is_connected(krack_friendship_undirect)
 
 closeness_friend_undirect <- closeness(krack_friendship_undirect, normalized = TRUE)
 summary(closeness_friend_undirect)
@@ -221,10 +220,10 @@ plot(krack_friendship_undirect,
 # network.
 
 # First, check if the network is connected.
-# Note: unlike undirected networks, in directed networks it is not sufficent 
-# to check for node degree (being !=0) to assure connectedness. Due to edge 
-# directionality, one has to check for the existence of a path between the 
-# given node and any other node in the network.
+# Note: in directed networks, we need to differentiate between two modes
+# of connectedness: 'weak' and 'strong'. The 'weak' form does not consider
+# edge direction, whereas the 'strong' mode does consider the direction of
+# edges 
 is.connected(krack_friendship, mode='strong')
 # not connected -> cannot compute closeness; so, we need to find the 
 # giant component (= the largest connected component in the graph)
