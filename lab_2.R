@@ -195,14 +195,19 @@ source('SNA_custom_functions.R')
 # The function creates a gradient color vector with as many color gradients as 
 # there are different values in the given attribute 
 closeness_colors = attr_based_color_gradient(g_attr = closeness_friend_undirect, 
-                                             pal_end_points = c('gold','red'))
+                                             pal_end_points = c('steelblue2', 'gold'))
 cl_weighted_colors = attr_based_color_gradient(g_attr = cl_weighted_friend_undirect, 
-                                             pal_end_points = c('gold','red'))
+                                             pal_end_points = c('steelblue2','red'))
+
+# Note: 
+# to select colors and find their names in R color pallets, you can use the
+# following R Colors cheatsheet:
+# https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/colorPaletteCheatsheet.pdf
 
 # Now, we can make a plot as we did in Lab 1
 plot(krack_friendship_undirect, 
      layout=layout_with_kk(krack_friendship_undirect), 
-     vertex.color = cl_weighted_colors, #closeness_colors, 
+     vertex.color = closeness_colors, #cl_weighted_colors,
      vertex.size = 1.5 * degree(krack_friendship_undirect),
      vertex.label.cex	= 0.15 * degree(krack_friendship_undirect),
      main="Uniderected friendship network\n
@@ -244,8 +249,8 @@ friendship_closeness = data.frame(node_id=as.integer(V(friendship_gc)$name),
 str(friendship_closeness)
 
 # Let's visualise these measures using node and label size to represent in-closeness,
-# and node color to represent out_closeness
-out_closeness_colors = attr_based_color_gradient(friendship_closeness$out_cl, c('gold','red'))
+# and node color to represent out-closeness
+out_closeness_colors = attr_based_color_gradient(friendship_closeness$out_cl, c('steelblue3','gold'))
 plot(friendship_gc, 
      layout=layout_with_kk(friendship_gc), 
      vertex.color=out_closeness_colors, 
@@ -255,7 +260,8 @@ plot(friendship_gc,
      main="Giant component of the Friendship network\n
             (node color denotes out-closeness, size denotes in-closeness)")
 
-# It seems that those with high in-closeness have low out-closeness and vice versa.
+# It seems that those with high in-closeness have low out-closeness and vice versa;
+# We will check that later by computing correlations of centrality measures.
 
 ###
 # TASK:  
@@ -284,13 +290,17 @@ krack_betweenness_df = data.frame(node_id=as.integer(V(krack_full)$name),
                                   reports_to=betweenness(krack_reports_to, normalized = TRUE))
 krack_betweenness_df
 
+# Identify the node with the highest betweenness in the advice network:
+max(krack_betweenness_df$advice)
+which(krack_betweenness_df$advice == max(krack_betweenness_df$advice))
+
 # Identify nodes with the highest betweenness in each network:
 apply(krack_betweenness_df[,-1], 2, function(x) which(x==max(x)))
 # Interestingly, no overlap across the networks
 
 # Let's visualise one of the networks using node color to represent betweeness
 # and node size to represent in-degree 
-betweenness_colors = attr_based_color_gradient(krack_betweenness_df$advice, c('gold', 'red'))
+betweenness_colors = attr_based_color_gradient(krack_betweenness_df$advice, c('steelblue3','gold'))
 plot(krack_advice, 
      layout=layout_with_kk(krack_advice), 
      vertex.color=betweenness_colors, 
@@ -316,7 +326,9 @@ plot(krack_advice,
 
 # Eigenvector centrality gives higher scores to nodes the more they 
 # are connected to other highly connected nodes. 
-# It is often interpreted as measuring a node's network importance.
+# It is often interpreted as a measure of a node's network importance.
+
+?eigen_centrality
 
 # We'll examine first undirected network of friendship ties
 eigen_friend_undirect <- eigen_centrality(krack_friendship_undirect)
@@ -330,12 +342,13 @@ summary(eigen_friend_undirect)
 # Note that in this case, weights are interpreted as the reflection of the 
 # connection strength: "higher weights spread the centrality better"
 w_eigen_friend_undirect <- eigen_centrality(krack_friendship_undirect, 
-                                    weights = E(krack_friendship_undirect)$friendship_tie)$vector
+                                    weights = E(krack_friendship_undirect)$friendship_tie)
+w_eigen_friend_undirect <- w_eigen_friend_undirect$vector
 summary(w_eigen_friend_undirect)
 
 # Plot the undirected friendship graph with eigenvector centrality represented 
 # through the nodes' color, and degree centrality through the nodes' size
-eigen_col = attr_based_color_gradient(eigen_friend_undirect, c('gold', 'red'))
+eigen_col = attr_based_color_gradient(eigen_friend_undirect, c('steelblue3', 'red'))
 # eigen_col = attr_based_color_gradient(w_eigen_friend_undirect, c('gold', 'red'))
 plot(krack_friendship_undirect, 
      layout=layout_with_kk(krack_friendship_undirect), 
@@ -353,6 +366,7 @@ summary(friendship_eigen)
 
 # Plot the original (directed) friendship graph using Eigenvector centrality 
 # for the nodes' color, and In-degree centrality for the nodes' size
+eigen_col = attr_based_color_gradient(friendship_eigen, c('steelblue3', 'gold'))
 plot(krack_friendship, 
      layout=layout_with_kk(krack_friendship), 
      vertex.color=eigen_col, 
@@ -423,12 +437,14 @@ friendship_centrality_all[order(friendship_centrality_all$eigen, decreasing = TR
 # To determine how to compute these correlations, we need to check if the 
 # assumption of normal distribution applies to our centrality measures:
 apply(friendship_centrality_all[,-1], 2, shapiro.test)
+apply(friendship_centrality_all[,-1], 2, qqnorm)
 # Not all metrics are normally distributed (betweenness and out_degree 
 # have non-normal distribution). So, better compute Spearman correlation coefficient
 centrality_corr <- cor(friendship_centrality_all[,-1], 
                        use='complete.obs', # has to be set as we have few NAs
                        method = 'spearman')
-
+centrality_corr
+# Not that easy to read and follow...
 # We will use the corrpolot() function from the *corrplot* R package 
 # to visually represent the computed correlations table
 # install.packages('corrplot')
@@ -436,6 +452,12 @@ library(corrplot)
 corrplot(corr = centrality_corr, type = "upper", 
          diag = FALSE,
          addCoef.col = "black")
+
+# Note:
+# To examine the plotting options of the corrplot function
+# check, for example, these examples:
+# https://rpubs.com/melike/corrplot
+
 
 # Interpretation:
 # In-degree and out-degree have low positive correlation (rho = 0.24),
