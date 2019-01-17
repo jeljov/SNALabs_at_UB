@@ -5,6 +5,7 @@
 ####################################################################
 
 
+
 ##############################################################
 # 
 # LAB 2
@@ -162,7 +163,8 @@ ggplot(data = deg_reports_to_df_long,
 # network; we will keep the friendship_tie edge attribute and drop the other two
 # attributes
 summary(krack_friendship)
-krack_friendship_undirect <- as.undirected(krack_friendship, mode = "collapse",
+krack_friendship_undirect <- as.undirected(krack_friendship, 
+                                           mode = "collapse",
                                            edge.attr.comb = list(friendship_tie='sum', 'ignore'))
 summary(krack_friendship_undirect)
 table(E(krack_friendship_undirect)$friendship_tie)
@@ -172,7 +174,8 @@ table(E(krack_friendship_undirect)$friendship_tie)
 # in the network.
 is_connected(krack_friendship_undirect)
 
-closeness_friend_undirect <- closeness(krack_friendship_undirect, normalized = TRUE)
+closeness_friend_undirect <- closeness(krack_friendship_undirect, 
+                                       normalized = TRUE)
 summary(closeness_friend_undirect)
 
 # We can also include edge attributes (weights) in the calculation of closeness.
@@ -181,7 +184,8 @@ summary(closeness_friend_undirect)
 # In our case higher values for the friendship_tie attribute mean closer relations,
 # that is, lower distance. So, to appropriately calculate weighted closeness, it is 
 # better to take reciprocal value of the friendship_tie attribute:
-cl_weighted_friend_undirect <- closeness(krack_friendship_undirect, normalized = TRUE,
+cl_weighted_friend_undirect <- closeness(krack_friendship_undirect, 
+                                         normalized = TRUE,
                                          weights = 1/E(krack_friendship_undirect)$friendship_tie)
 summary(cl_weighted_friend_undirect)
 
@@ -250,13 +254,14 @@ str(friendship_closeness)
 
 # Let's visualise these measures using node and label size to represent in-closeness,
 # and node color to represent out-closeness
-out_closeness_colors = attr_based_color_gradient(friendship_closeness$out_cl, c('steelblue3','gold'))
+out_closeness_colors = attr_based_color_gradient(friendship_closeness$out_cl, 
+                                                 c('steelblue3','gold'))
 plot(friendship_gc, 
      layout=layout_with_kk(friendship_gc), 
      vertex.color=out_closeness_colors, 
      vertex.size=friendship_closeness$in_cl*30,
      vertex.label.cex=friendship_closeness$in_cl*2, 
-     edge.arrow.size=.3,
+     edge.arrow.size=.15,
      main="Giant component of the Friendship network\n
             (node color denotes out-closeness, size denotes in-closeness)")
 
@@ -300,7 +305,8 @@ apply(krack_betweenness_df[,-1], 2, function(x) which(x==max(x)))
 
 # Let's visualise one of the networks using node color to represent betweeness
 # and node size to represent in-degree 
-betweenness_colors = attr_based_color_gradient(krack_betweenness_df$advice, c('steelblue3','gold'))
+betweenness_colors = attr_based_color_gradient(krack_betweenness_df$advice, 
+                                               c('steelblue3','gold'))
 plot(krack_advice, 
      layout=layout_with_kk(krack_advice), 
      vertex.color=betweenness_colors, 
@@ -359,9 +365,11 @@ plot(krack_friendship_undirect,
      (node color denotes eigenvector centrality, while size reflects degree)")
 
 
+
 # Let's now compute also Eigenvector centrality using the (true) directed version
 # of the friendship network
-friendship_eigen <- eigen_centrality(krack_friendship, directed = TRUE)$vector
+friendship_eigen <- eigen_centrality(krack_friendship, 
+                                     directed = TRUE)$vector
 summary(friendship_eigen)
 
 # Plot the original (directed) friendship graph using Eigenvector centrality 
@@ -398,13 +406,14 @@ friendship_centrality_all <- data.frame(node_id=as.integer(V(krack_friendship)$n
                                         out_degree=deg_friendship_df$out_degree,
                                         betweenness=krack_betweenness_df$friendship,
                                         eigen=friendship_eigen)
-
+View(friendship_centrality_all)
 # Note that to compute in- and out-closeness we needed to remove a few vertices,
 # so, we have to add these scores in a separate step, using the merge() function
 ?merge
 friendship_centrality_all <- merge(x = friendship_centrality_all, 
                                    y = friendship_closeness,
-                                   by = 'node_id', all = TRUE)
+                                   by.x = 'node_id',
+                                   by.y = 'node_id', all = TRUE)
 str(friendship_centrality_all)
 View(friendship_centrality_all)
 
@@ -412,11 +421,11 @@ View(friendship_centrality_all)
 # according to different centrality measures we have computed.
 
 # Sort by betwenness
-friendship_centrality_all[order(friendship_centrality_all$betweenness, decreasing = TRUE),]
+View(friendship_centrality_all[order(friendship_centrality_all$betweenness, decreasing = TRUE),])
 # Note that betweenness seems to be correlated with out-degree and out-closeness
 
 # Sort by eigen
-friendship_centrality_all[order(friendship_centrality_all$eigen, decreasing = TRUE),]
+View(friendship_centrality_all[order(friendship_centrality_all$eigen, decreasing = TRUE),])
 # Note that Eigenvector c. seems to be correlated with in-degree and in-closeness
 
 ##
@@ -447,11 +456,12 @@ centrality_corr
 # Not that easy to read and follow...
 # We will use the corrpolot() function from the *corrplot* R package 
 # to visually represent the computed correlations table
-# install.packages('corrplot')
+install.packages('corrplot')
 library(corrplot)
 corrplot(corr = centrality_corr, type = "upper", 
          diag = FALSE,
-         addCoef.col = "black")
+         addCoef.col = "black",
+         title = "Correlations of centrality measures")
 
 # Note:
 # To examine the plotting options of the corrplot function
@@ -485,3 +495,7 @@ corrplot(corr = centrality_corr, type = "upper",
 # Do the same kind of analysis - computation of centrality measures 
 # and examining correlations of those measures for the advice network.
 ##
+
+
+summary(krack_advice)
+summary(E(krack_advice)$advice_tie)
