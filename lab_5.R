@@ -21,7 +21,7 @@
 # you'll need to do the following three things:
 # 1) Set up a Twitter account, if you don’t already have one
 # 2) Using your account, setup an application that you will use to 
-# access Twitter from R
+#    access Twitter from R
 # 3) Install and load the following R packages: rtweet, httpuv, and tidyr
 
 # To setup your Twitter app, follow the tutorial from rtweet:
@@ -29,7 +29,7 @@
 # or this 'recipe' from "21 Recipes for Mining Twitter Data with rtweet":
 # https://rud.is/books/21-recipes/using-oauth-to-access-twitter-apis.html
 
-# Then, install and load *rtweet* and *tidyr* R packages
+# Then, install and load rtweet, httpuv, and tidyr R packages
 # install.packages('rtweet')
 # install.packages('httpuv')
 # install.packages('tidyr')
@@ -106,7 +106,9 @@ brexit_tweets <- search_tweets(q = "#brexit",
 # https://help.twitter.com/en/using-twitter/twitter-advanced-search
 
 # (optionally) save the results
-saveRDS(brexit_tweets, 'data/brexit_tweets_22-01-2019.RData')
+# saveRDS(brexit_tweets, 'data/brexit_tweets_22-01-2019.RData')
+# load the saved data (for offline work)
+# brexit_tweets <- readRDS("data/brexit_tweets_22-01-2019.RData")
 
 # Examine the variables (columns) in the obtained dataset
 colnames(brexit_tweets)
@@ -153,13 +155,15 @@ replied_to_edgelist <- brexit_tweets_users %>%
   select(-mentioned) %>%              # remove the 'mentioned' column
   filter(complete.cases(.)) %>%       # keep only complete rows, that is, rows without NAs
   group_by(sender, replied_to) %>%    # group the rows based on the sender, replied_to combination
-  summarise(n = n()) %>%              # compute the size of each group and assign the value to variable 'n'
+  summarise(weight = n()) %>%         # compute the size of each group (i.e. number of connections 
+                                      # between sender and replied_to nodee) and assign it to the 
+                                      # 'weight' variable
   ungroup()
 
 head(replied_to_edgelist, n=10)
 # check the pairs with the most intensive communication: 
 replied_to_edgelist %>%
-  arrange(desc(n)) %>%
+  arrange(desc(weight)) %>%
   head(n=10)
 
 # In a similar way, create an edge list based on 'mentioned' relation
@@ -167,13 +171,13 @@ mentioned_edgelist <- brexit_tweets_users %>%
   select(-replied_to) %>%
   filter(complete.cases(.)) %>%
   group_by(sender, mentioned) %>%
-  summarise(n = n()) %>%
+  summarise(weight = n()) %>%
   ungroup()
 
 head(mentioned_edgelist, n=10)
 # examine most frequent mentions:
 mentioned_edgelist %>%
-  arrange(desc(n)) %>%
+  arrange(desc(weight)) %>%
   head(n=10)
 
 
@@ -196,14 +200,14 @@ length(mention_unique)
 
 # To decide on how to do the filtering, we'll examine the frequency 
 # of connections
-summary(replied_to_edgelist$n)
-summary(mentioned_edgelist$n)
+summary(replied_to_edgelist$weight)
+summary(mentioned_edgelist$weight)
 
-# As there are too many users with loose connections (n<=2),
+# As there are too many users with loose connections (weight<=2),
 # remove those connections that occurred just once.
 # First for the mentioned edgelist:
 mentioned_edgelist_reduced <- mentioned_edgelist %>%
-  filter(n > 1)
+  filter(weight > 1)
 # Note a huge reduction in the size of the edgelist
 
 # Check again the number of unique users 
@@ -212,7 +216,7 @@ mention_unique <- with(mentioned_edgelist_reduced, union(sender, mentioned))
 
 # Now, for the reply_to edge list:
 replied_to_edgelist_reduced <- replied_to_edgelist %>%
-  filter(n > 1)
+  filter(weight > 1)
 # Again, a notable reduction
 
 # Check again the number of unique users 
@@ -252,7 +256,9 @@ length(no_data_alters)
 alters_data <- lookup_users(no_data_alters)
 
 # save the data
-saveRDS(alters_data, "data/brexit_alters_data_22-01-2019.RData")
+# saveRDS(alters_data, "data/brexit_alters_data_22-01-2019.RData")
+# load the saved data (for offline work)
+# alters_data <- readRDS("data/brexit_alters_data_22-01-2019.RData")
 
 glimpse(alters_data)
 # In addition to user data, the lookup_users() f. also returned users' tweets.
@@ -262,21 +268,21 @@ alters_data <- users_data(alters_data)
 # We should also check if we managed to retrieve data for all the users that 
 # we were interested (the service may not return all the requested data)
 missing_alter <- setdiff(no_data_alters, alters_data$screen_name)
-# We didn't get the data for 1 user; 
-# we'll drop him/her from the edge lists before saving them.
+length(missing_alter)
+# In case of missing user data, drop those users from the edge lists before saving them.
 
 # Since we have done a lot of relevant processing steps, it may be wise to save 
-# the created edge lists and user attributes, so that we do not ahve to repeat the
+# the created edge lists and user attributes, so that we do not have to repeat the
 # processing steps.
 # Before saving edge lists, rename columns to the typical names used in edge lists
 mentioned_edgelist_reduced %>%
   filter(!mentioned %in% missing_alter) %>%
-  rename(ego=sender, alter=mentioned, mention_tie=n) %>%
+  rename(ego=sender, alter=mentioned, mention_tie=weight) %>%
   saveRDS(file = "data/mentions_edgelist_#brexit_20-01-2019.RData")
 
 replied_to_edgelist_reduced %>%
   filter(!replied_to %in% missing_alter) %>%
-  rename(ego=sender, alter=replied_to, reply_to_tie=n) %>%
+  rename(ego=sender, alter=replied_to, reply_to_tie=weight) %>%
   saveRDS(file = "data/replied_to_edgelist_#brexit_20-01-2019.RData")
 
 saveRDS(senders_data, file = "data/ego_data_#brexit_20-01-2019.RData")

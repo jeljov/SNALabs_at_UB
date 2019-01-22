@@ -541,8 +541,8 @@ friend_net_wdir_clust = cutree(friend_net_wdir_hc, k = 2)
 # Plot graph with clusters
 plot(friend_net, 
      vertex.color=friend_net_wdir_clust, 
-     edge.width = E(friend_net)$friend_tie * 1.5,
-     edge.arrow.size = 0.3,
+     edge.width = E(friend_net)$friend_tie * 2,
+     edge.arrow.size = 0.35,
      main="Communities detected in directed weighted friendship network\n using Agglomerative Hierarchical clustering")
 
 # Add modularity to the modularity_scores list
