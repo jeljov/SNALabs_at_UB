@@ -401,6 +401,7 @@ max_wt_modularity <- max(wt_modularity)
 which(wt_modularity == max_wt_modularity)
 # We got the best score for 1,2, and 3 steps
 # So, let's re-run the algorithm with, e.g., 3 steps
+set.seed(seed)
 friend_comm_wt_2 <- cluster_walktrap(friend_net_und, steps=3)
 friend_comm_wt_2
 plot(friend_comm_wt_2, friend_net_und)
@@ -413,22 +414,26 @@ modularity_scores$WT_3steps <- modularity(friend_comm_wt_2)
 # We can also examine the community structure with edge weights included.
 # To that end, we will repeat the above modularity-based process of findng 
 # the optimal number of steps in the random walk:
-wt_weighted_modularity <- vector(mode = 'numeric', length = 20)
-for (s in 1:20) {
+max_steps <- diameter(friend_net_und, directed = FALSE, 
+                      unconnected = FALSE)
+max_steps
+wt_weighted_modularity <- vector(mode = 'numeric', length = max_steps)
+for (s in 1:max_steps) {
   set.seed(seed)
   wt_weighted_result <- cluster_walktrap(friend_net_und, steps = s, 
                                          weights = E(friend_net_und)$friend_tie)
   wt_weighted_modularity[s] <- modularity(wt_weighted_result)
 }
 which(wt_weighted_modularity == max(wt_weighted_modularity))
-# We got the best modularity score for any number of steps between 1 and 7
+# We got the best modularity score for any number of steps between 1 and 3
 # So, let's re-run the algorithm with, e.g., 3 steps
-friend_comm_wt_weighted <- cluster_walktrap(friend_net_und, steps=3)
+friend_comm_wt_weighted <- cluster_walktrap(friend_net_und, steps=3,
+                                            weights = E(friend_net_und)$friend_tie)
 friend_comm_wt_weighted
 # Plot the result
 plot(friend_net_und,
-     layout = layout_with_fr(friend_net_und),
-     vertex.color = membership(friend_comm_wt_weighted),
+     layout = layout_with_fr(friend_net_und, weights = E(friend_net_und)$friend_tie),
+     vertex.color = c('red', 'green', 'yellow')[membership(friend_comm_wt_weighted)],
      edge.width = E(friend_net_und)$friend_tie * 1.5,
      edge.color = c('dodgerblue3', 'firebrick4')[crossing(friend_comm_wt_weighted, friend_net_und) + 1],
      main="Communities detected in undirected weighted friendship network\n using Walktrap method") 
@@ -484,7 +489,7 @@ friend_net_clust <- cutree(friend_net_hc, k = 2)
 
 # Plot graph with clusters
 plot(friend_net_und, 
-     vertex.color=friend_net_clust, 
+     vertex.color=c('gold', 'steelblue2')[friend_net_clust], 
      layout = layout_with_fr(friend_net_und),
      main="Communities detected in undirected friendship network\n using Agglomerative Hierarchical clustering")
 
@@ -501,12 +506,17 @@ modularity_scores$HC <- modularity(friend_net_und, friend_net_clust)
 
 # Step 1: get the graph's adjacency matrix (considering edge direction and weight)
 friend_net_wdir_adj_mat = as_adjacency_matrix(friend_net, 
-                                               sparse=FALSE, attr = 'friend_tie')
+                                              sparse=FALSE, 
+                                              attr = 'friend_tie')
 friend_net_wdir_adj_mat
+
+temp <- friend_net_wdir_adj_mat
+temp[temp > 0] <- 1/temp[temp>0]
+temp
 
 # Step 2: compute cosine similarity between rows 
 # (vector of connections of each node) of the adjacency matrix
-friend_net_wdir_sim_mat = cosine(friend_net_wdir_adj_mat)
+friend_net_wdir_sim_mat = cosine(temp)
 
 # Step 3: create distance matrix, required by the clustering function
 friend_net_wdir_dist_mat = 1-friend_net_wdir_sim_mat
@@ -529,19 +539,19 @@ modularity(friend_net, cutree(friend_net_wdir_hc, k = 3))
 modularity(friend_net, cutree(friend_net_wdir_hc, k = 4))
 
 
-# Based on the modularity scores, 2 clusters is the better option. 
+# Based on the modularity scores, 3 clusters is the better option. 
 # Furthermore, it doesn't make much sense to have a community with 
 # one vertex only.
 # Draw blue borders around those clusters to better visualise them
-rect.hclust(friend_net_wdir_hc, k = 2, border="blue")
+rect.hclust(friend_net_wdir_hc, k = 3, border="blue")
 
-# Step 7: get cluster assignments by cutting the dendrogram into 2 clusters
-friend_net_wdir_clust = cutree(friend_net_wdir_hc, k = 2)
+# Step 7: get cluster assignments by cutting the dendrogram into 3 clusters
+friend_net_wdir_clust = cutree(friend_net_wdir_hc, k = 3)
 
 # Plot graph with clusters
 plot(friend_net, 
-     vertex.color=friend_net_wdir_clust, 
-     edge.width = E(friend_net)$friend_tie * 2,
+     vertex.color=c('gold', 'steelblue2', 'pink')[friend_net_wdir_clust], 
+     edge.width = E(friend_net)$friend_tie * 2.5,
      edge.arrow.size = 0.35,
      main="Communities detected in directed weighted friendship network\n using Agglomerative Hierarchical clustering")
 
