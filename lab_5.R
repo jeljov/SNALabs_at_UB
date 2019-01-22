@@ -93,7 +93,7 @@ file.edit(".Renviron")
 ###
 
 ?search_tweets
-brexit_tweets <- search_tweets(q = "#brexit", 
+brexit_tweets <- search_tweets(q =  "#brexit", 
                                type = 'mixed', 
                                lang="en", 
                                # geocode = "51.509865,-0.118092,5mi",
@@ -108,10 +108,11 @@ brexit_tweets <- search_tweets(q = "#brexit",
 # (optionally) save the results
 # saveRDS(brexit_tweets, 'data/brexit_tweets_22-01-2019.RData')
 # load the saved data (for offline work)
-# brexit_tweets <- readRDS("data/brexit_tweets_22-01-2019.RData")
+brexit_tweets <- readRDS("data/brexit_tweets_22-01-2019.RData")
 
 # Examine the variables (columns) in the obtained dataset
 colnames(brexit_tweets)
+glimpse(brexit_tweets)
 
 # Select only those columns (variables) that are relevant for creating
 # a network. We will create "mentions" network, that is a network with
@@ -129,12 +130,12 @@ glimpse(brexit_tweets_users)
 
 # Note that many entries have missing values (NA) for the 'replied_to' and 'mentioned'
 # variables. Check how many such cases we have:
-length(which(is.na(brexit_tweets_users$replied_to)))
+length(which(is.na(brexit_tweets_users$replied_to)==TRUE))
 length(which(is.na(brexit_tweets_users$mentioned)))
 # Keep only those tweets where the sender mentioned or replied to at least 
 # one other Twitter user
 brexit_tweets_users <- brexit_tweets_users %>%
-  filter( !is.na(replied_to) | !is.na(mentioned) )
+  filter( is.na(replied_to)==FALSE | is.na(mentioned)==FALSE )
 
 View(brexit_tweets_users[1:10,])
 
@@ -185,6 +186,7 @@ mentioned_edgelist %>%
 # Those will be nodes in the corresponding networks.
 
 # Unique users in replied_to edgelist
+reply_to_unique <- union(replied_to_edgelist$sender, replied_to_edgelist$replied_to)
 reply_to_unique <- with(replied_to_edgelist, union(sender, replied_to))
 length(reply_to_unique)
 
@@ -224,6 +226,7 @@ reply_to_unique <- with(replied_to_edgelist_reduced, union(sender, replied_to))
 # It is reduced but not as much as in the case of the 
 # mentioned relation
 
+## STOPPED HERE
 
 # Next, we'll collect users' data. These data can be used to describe nodes 
 # in networks, that is, to associate attributes to nodes.
