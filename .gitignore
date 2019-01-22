@@ -35,3 +35,7 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 .Rproj.user
+
+# Files related to my Twitter developer account
+.Renviron
+rtweet.rds

@@ -80,6 +80,7 @@ data(studentnets.M182, package = "NetData")
 remove(m182_full_data_frame)
 
 # Create graphs for the 3 different type of ties
+
 summary(friend_df$friend_tie)
 # Notice many zeros (at least half tie values are zero); 
 # so, we need to first select only those rows of the df 
@@ -115,9 +116,11 @@ plot_graph <- function(g, type, edge_weights) {
 
 plot_graph(friend_net, 'Friendship', E(friend_net)$friend_tie * 1.25)
 
-plot_graph(social_net, 'Social interactions', E(social_net)$social_tie * 0.5)
+plot_graph(social_net, 'Social interactions', 
+           E(social_net)$social_tie * 0.5)
 
-plot_graph(task_net, 'Task interactions', E(task_net)$task_tie * 0.75)
+plot_graph(task_net, 'Task interactions', 
+           E(task_net)$task_tie * 0.75)
 
 
 ###
@@ -138,7 +141,8 @@ summary(friend_net_und)
 table(E(friend_net_und)$friend_tie)
 
 plot_graph(friend_net_und, 
-           'Friendship (undirected)', E(friend_net_und)$friend_tie)
+           'Friendship (undirected)', 
+           E(friend_net_und)$friend_tie)
 
 # Check if it is connected 
 is_connected(friend_net_und)
@@ -206,7 +210,8 @@ plot(friend_comm_eb,  friend_net_und,
 # edge, ordered according to the edge ids. The value is TRUE iff the 
 # edge connects two different communities
 crossing(friend_comm_eb, friend_net_und)
-cross_community_edges <- which(crossing(friend_comm_eb, friend_net_und))
+cross_community_edges <- 
+  which(crossing(friend_comm_eb, friend_net_und)==TRUE)
 cross_community_edges
 
 # The crossing() function returns edges based on their edge id. If we are 
@@ -217,6 +222,7 @@ bridges <- data.frame(edge_id = as.integer(cross_community_edges),
                       eb = edge_betweenness(graph = friend_net_und, 
                                             e = cross_community_edges,
                                             directed = FALSE))
+bridges
 bridges[order(bridges$eb, decreasing = TRUE),]
 
 # We can establish a connection here with the concept of brokers that
@@ -229,11 +235,12 @@ edge_color <- rep('steelblue4', times=ecount(friend_net_und))
 edge_color[cross_community_edges] <- 'firebrick4'
 set.seed(seed)
 plot(friend_net_und, 
-     layout=layout_with_kk(friend_net_und),
+     layout=layout_with_dh(friend_net_und),
      vertex.color=membership(friend_comm_eb),
      vertex.size=betweenness(friend_net_und, directed = FALSE) * 5,
      vertex.label.cex=betweenness(friend_net_und, directed = FALSE) * 0.25,
      edge.color = edge_color,
+     edge.width = 2,
      main="Communities detected using edge-betweenness in undirected friendship network")
 
 
@@ -323,6 +330,7 @@ friend_comm_Louvain_w
 # Let's plot it
 set.seed(seed)
 plot(friend_net_und, 
+     layout = layout_with_graphopt(friend_net_und),
      vertex.color = membership(friend_comm_Louvain_w), 
      edge.color = c('dodgerblue3', 'firebrick4')[crossing(friend_comm_Louvain_w, friend_net_und) + 1],
      edge.width = E(friend_net_und)$friend_tie * 1.5,
