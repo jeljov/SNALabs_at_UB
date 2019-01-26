@@ -62,11 +62,11 @@ library(igraph)
 # for your Twitter app (https://developer.twitter.com/en/apps)
 twitter_token <- create_token(
   app = "your_app_name", # replace this string with the actual name of your Twitter app
-  consumer_key = "your_consumer_key", # replace this string with the actual consumer_key for your Twitter app 
-  consumer_secret = "your_consumer_secret", # replace this string with the actual consumer_secret for your Twitter app 
-  access_token = "your_access_key", # replace this string with the actual access_key for your Twitter app 
-  access_secret = "your_access_secret" # replace this string with the actual access_secret for your Twitter app 
-)  
+  consumer_key = "your_consumer_key", # replace this string with the actual consumer_key for your Twitter app
+  consumer_secret = "your_consumer_secret", # replace this string with the actual consumer_secret for your Twitter app
+  access_token = "your_access_key", # replace this string with the actual access_key for your Twitter app
+  access_secret = "your_access_secret" # replace this string with the actual access_secret for your Twitter app
+)
 
 # Save the token in a file:
 saveRDS(twitter_token, "rtweet.rds")
@@ -93,11 +93,11 @@ file.edit(".Renviron")
 ###
 
 ?search_tweets
-brexit_tweets <- search_tweets(q =  "#brexit", 
-                               type = 'mixed', 
-                               lang="en", 
+brexit_tweets <- search_tweets(q =  "#brexit",
+                               type = 'mixed',
+                               lang="en",
                                # geocode = "51.509865,-0.118092,5mi",
-                               n = 5000, 
+                               n = 5000,
                                include_rts = FALSE)
 
 # Note: to more easily create complex queries, that is queries enabled by 
@@ -226,7 +226,6 @@ reply_to_unique <- with(replied_to_edgelist_reduced, union(sender, replied_to))
 # It is reduced but not as much as in the case of the 
 # mentioned relation
 
-## STOPPED HERE
 
 # Next, we'll collect users' data. These data can be used to describe nodes 
 # in networks, that is, to associate attributes to nodes.
@@ -281,15 +280,15 @@ length(missing_alter)
 mentioned_edgelist_reduced %>%
   filter(!mentioned %in% missing_alter) %>%
   rename(ego=sender, alter=mentioned, mention_tie=weight) %>%
-  saveRDS(file = "data/mentions_edgelist_#brexit_20-01-2019.RData")
+  saveRDS(file = "data/mentions_edgelist_#brexit_26-01-2019.RData")
 
 replied_to_edgelist_reduced %>%
   filter(!replied_to %in% missing_alter) %>%
   rename(ego=sender, alter=replied_to, reply_to_tie=weight) %>%
-  saveRDS(file = "data/replied_to_edgelist_#brexit_20-01-2019.RData")
+  saveRDS(file = "data/replied_to_edgelist_#brexit_26-01-2019.RData")
 
-saveRDS(senders_data, file = "data/ego_data_#brexit_20-01-2019.RData")
-saveRDS(alters_data, file = "data/alter_data_#brexit_20-01-2019.RData")
+saveRDS(senders_data, file = "data/ego_data_#brexit_26-01-2019.RData")
+saveRDS(alters_data, file = "data/alter_data_#brexit_26-01-2019.RData")
 
 # Do the clean up, that is, remove all objects from the environment, 
 # we won't need them any more
@@ -301,7 +300,7 @@ remove(list = ls())
 ##
 
 # Load data (edge list) for creating a network based on the 'mentioned' relation
-mention_edgelist <- readRDS("data/mentions_edgelist_#brexit_20-01-2019.RData")
+mention_edgelist <- readRDS("data/mentions_edgelist_#brexit_26-01-2019.RData")
 summary(mention_edgelist$mention_tie)
 
 # Create a directed network
@@ -334,14 +333,15 @@ get_user_attrs <- function(twitter_user_data, users_screen_names) {
 
 # Load senders data; it will be used to add attributes to ego /source nodes
 # (i.e. nodes that edges originate from) 
-senders_data <- readRDS("data/ego_data_#brexit_20-01-2019.RData")
+senders_data <- readRDS("data/ego_data_#brexit_26-01-2019.RData")
 # Extract the set of attributes we are interested in 
 ego_attrs <- get_user_attrs(senders_data, V(mention_net)$name)
 glimpse(ego_attrs)
 
 # Load data and extract attributes about users mentioned in tweets
-alters_data <- readRDS("data/alter_data_#brexit_20-01-2019.RData")
+alters_data <- readRDS("data/alter_data_#brexit_26-01-2019.RData")
 alter_attrs <- get_user_attrs(alters_data, V(mention_net)$name)  
+glimpse(alter_attrs)
 
 # Merge attributes for all the actors in the 'mentioned' network 
 node_attrs <- rbind(ego_attrs, alter_attrs) %>% # merge the two data frames
@@ -424,12 +424,14 @@ giant_comp <- induced_subgraph(mention_net,
                                vids = V(mention_net)[m_net_comp$membership==giant_comp_index])
 
 summary(giant_comp)
+is_connected(giant_comp, mode = 'weak')
 
 # Now, plot the giant component using igraph's plotting features. 
 # Use the same kind of mapping between nodes' attributes (friends_cnt and followers_cnt) and their
 # visual representation (color and size, respectively)
 gc_colors <- attr_based_color_gradient(log1p(V(giant_comp)$friends_cnt), c('gold','steelblue3'))
 gc_size <- log1p(V(giant_comp)$followers_cnt)
+set.seed(2501)
 plot(giant_comp, 
      layout = layout_with_dh(giant_comp),
      edge.arrow.size=0.3, 
@@ -512,7 +514,8 @@ visnet
 # visNetwork offers a number of other options available through 
 # the visOptions() function. For instance, we can highlight all 
 # direct neighbors and those 2 hops away:
-visnet2 <- visOptions(visnet, highlightNearest = list(enabled = TRUE, degree = 2))
+visnet2 <- visOptions(visnet, 
+                      highlightNearest = list(enabled = TRUE, degree = 2))
 visnet2
 
 # explore other visOptions
